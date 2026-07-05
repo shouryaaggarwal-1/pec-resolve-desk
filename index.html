@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PEC ResolveDesk — Student Grievance Portal</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --ink: #1c1c28;
+    --muted: #6b6b7b;
+    --accent: #1a3fa0;
+    --border: #e6e6ee;
+    --high: #ff4747;
+    --medium: #ff9f2f;
+    --low: #2fbf6f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px;
+  }
+
+  header {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+  }
+
+  .hero-banner {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    height: 160px;
+  }
+  .hero-banner svg { width: 100%; height: 100%; display: block; }
+  .hero-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 20px;
+  }
+  .hero-text-inner {
+    background: rgba(255,255,255,0.88);
+    color: #000000;
+    padding: 10px 18px;
+    border-radius: 8px;
+    display: inline-block;
+    width: fit-content;
+  }
+  .hero-text h1 { font-size: 24px; margin-bottom: 4px; color: #000000; }
+  .hero-text .byline { font-size: 12px; color: #000000; }
+  header h1 { font-size: 22px; }
+  header .byline { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  /* ---------- STATS BAR ---------- */
+  .stats {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-box .num { font-size: 26px; font-weight: 700; }
+  .stat-box .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ---------- FORM ---------- */
+  .card h3 { font-size: 15px; margin-bottom: 12px; }
+  label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; margin-top: 12px; }
+  input, select, textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+
+  #priorityPreview {
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+  }
+
+  button.submit-btn {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 11px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  /* ---------- COMPLAINT LIST ---------- */
+  .complaint {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .complaint-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .complaint-top h4 { font-size: 14px; }
+  .complaint-top .cust { font-size: 12px; color: var(--muted); }
+  .badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    color: white;
+    white-space: nowrap;
+  }
+  .badge.high { background: var(--high); }
+  .badge.medium { background: var(--medium); }
+  .badge.low { background: var(--low); }
+
+  .complaint p.desc { font-size: 13px; color: var(--ink); margin-bottom: 10px; }
+
+  .complaint-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+  }
+  .sla-timer {
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .sla-safe { background: #e6f9ee; color: var(--low); }
+  .sla-warning { background: #fff3e0; color: var(--medium); }
+  .sla-overdue { background: #ffe6e6; color: var(--high); }
+
+  select.status-select {
+    width: auto;
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  .empty-msg { text-align: center; color: var(--muted); padding: 30px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="hero-banner">
+  <svg viewBox="0 0 1100 160" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1a3fa0"/>
+        <stop offset="100%" stop-color="#3f66c9"/>
+      </linearGradient>
+    </defs>
+    <rect width="1100" height="160" fill="url(#sky)"/>
+
+    <!-- ground -->
+    <rect y="140" width="1100" height="20" fill="#173a8c"/>
+
+    <!-- distant trees -->
+    <g fill="#2c519e" opacity="0.6">
+      <circle cx="60" cy="132" r="18"/>
+      <circle cx="95" cy="136" r="14"/>
+      <circle cx="980" cy="130" r="20"/>
+      <circle cx="1030" cy="136" r="15"/>
+    </g>
+
+    <!-- main academic building -->
+    <g>
+      <rect x="380" y="55" width="340" height="90" fill="#e9edf7"/>
+      <polygon points="380,55 550,20 720,55" fill="#c7d0ea"/>
+      <!-- central dome/tower -->
+      <rect x="530" y="30" width="40" height="30" fill="#dfe4f5"/>
+      <polygon points="525,30 550,10 575,30" fill="#aebbe0"/>
+      <!-- pillars -->
+      <rect x="400" y="75" width="10" height="70" fill="#aebbe0"/>
+      <rect x="440" y="75" width="10" height="70" fill="#aebbe0"/>
+      <rect x="480" y="75" width="10" height="70" fill="#aebbe0"/>
+      <rect x="620" y="75" width="10" height="70" fill="#aebbe0"/>
+      <rect x="660" y="75" width="10" height="70" fill="#aebbe0"/>
+      <rect x="700" y="75" width="10" height="70" fill="#aebbe0"/>
+      <!-- entrance -->
+      <rect x="530" y="100" width="40" height="45" fill="#1a3fa0"/>
+      <!-- windows row -->
+      <g fill="#8fa0d4">
+        <rect x="395" y="90" width="20" height="14"/>
+        <rect x="435" y="90" width="20" height="14"/>
+        <rect x="475" y="90" width="20" height="14"/>
+        <rect x="605" y="90" width="20" height="14"/>
+        <rect x="645" y="90" width="20" height="14"/>
+        <rect x="685" y="90" width="20" height="14"/>
+      </g>
+    </g>
+
+    <!-- side hostel-style buildings -->
+    <g fill="#d7deef">
+      <rect x="180" y="80" width="150" height="65" />
+      <rect x="770" y="80" width="150" height="65" />
+    </g>
+    <g fill="#8fa0d4">
+      <rect x="195" y="95" width="16" height="12"/>
+      <rect x="225" y="95" width="16" height="12"/>
+      <rect x="255" y="95" width="16" height="12"/>
+      <rect x="285" y="95" width="16" height="12"/>
+      <rect x="785" y="95" width="16" height="12"/>
+      <rect x="815" y="95" width="16" height="12"/>
+      <rect x="845" y="95" width="16" height="12"/>
+      <rect x="875" y="95" width="16" height="12"/>
+    </g>
+
+    <!-- flag on dome -->
+    <line x1="550" y1="10" x2="550" y2="2" stroke="#ffcc4d" stroke-width="2"/>
+    <polygon points="550,2 562,5 550,8" fill="#ffcc4d"/>
+  </svg>
+
+  <div class="hero-text">
+    <div class="hero-text-inner">
+      <h1>🎓 PEC ResolveDesk</h1>
+      <div class="byline">Punjab Engineering College, Chandigarh — Student Grievance Portal | Built by Shourya Aggarwal</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <div class="stats">
+    <div class="stat-box"><div class="num" id="statTotal">0</div><div class="label">Total Grievances</div></div>
+    <div class="stat-box"><div class="num" id="statOpen">0</div><div class="label">Open</div></div>
+    <div class="stat-box"><div class="num" id="statResolved">0</div><div class="label">Resolved</div></div>
+    <div class="stat-box"><div class="num" id="statOverdue">0</div><div class="label">Overdue (SLA breached)</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Submit a Grievance</h3>
+
+    <label>Student Name</label>
+    <input type="text" id="custName" placeholder="e.g. Rohan Mehta">
+
+    <label>Roll No. / SID</label>
+    <input type="text" id="rollNo" placeholder="e.g. 24102XXX">
+
+    <label>Category</label>
+    <select id="category">
+      <option>Hostel & Accommodation</option>
+      <option>Mess / Canteen</option>
+      <option>Academic / Faculty</option>
+      <option>Library</option>
+      <option>Wi-Fi / IT Services</option>
+      <option>Infrastructure & Maintenance</option>
+      <option>Administration / Fees</option>
+      <option>Other</option>
+    </select>
+
+    <label>Grievance Description</label>
+    <textarea id="descInput" placeholder="Describe your issue in detail..." oninput="previewPriority()"></textarea>
+
+    <div id="priorityPreview"></div>
+
+    <button class="submit-btn" onclick="submitComplaint()">Submit Complaint</button>
+  </div>
+
+  <div class="card">
+    <h3>Active Grievances</h3>
+    <div id="complaintList"></div>
+  </div>
+
+</div>
+
+<script>
+  // =====================================================================
+  // 1. SMART PRIORITY DETECTION
+  // We scan the complaint text for keywords that signal urgency.
+  // This is a simple rule-based system (not real AI), but it demonstrates
+  // the same idea real CRM/support tools use to auto-triage tickets.
+  // =====================================================================
+  const highUrgencyWords = ["urgent", "not working", "broken", "leakage", "no water", "power cut", "harassment", "immediately", "asap", "unsafe", "emergency"];
+  const mediumUrgencyWords = ["delay", "late", "issue", "problem", "wrong", "damaged", "missing", "not clean", "slow"];
+
+  function detectPriority(text) {
+    const lower = text.toLowerCase();
+    if (highUrgencyWords.some(word => lower.includes(word))) return "High";
+    if (mediumUrgencyWords.some(word => lower.includes(word))) return "Medium";
+    return "Low";
+  }
+
+  function previewPriority() {
+    const text = document.getElementById("descInput").value;
+    const preview = document.getElementById("priorityPreview");
+
+    if (!text.trim()) {
+      preview.style.display = "none";
+      return;
+    }
+
+    const priority = detectPriority(text);
+    const colors = { High: "#ffe6e6", Medium: "#fff3e0", Low: "#e6f9ee" };
+    const textColors = { High: "#ff4747", Medium: "#ff9f2f", Low: "#2fbf6f" };
+
+    preview.style.display = "block";
+    preview.style.background = colors[priority];
+    preview.style.color = textColors[priority];
+    preview.textContent = `⚡ Auto-detected priority: ${priority}`;
+  }
+
+  // =====================================================================
+  // 2. SLA (Service Level Agreement) LOGIC
+  // Each priority level gets a resolution deadline:
+  //   High -> 24 hours, Medium -> 48 hours, Low -> 72 hours
+  // We calculate a countdown from the time the complaint was submitted.
+  // =====================================================================
+  const slaHours = { High: 24, Medium: 48, Low: 72 };
+
+  function getSlaStatus(complaint) {
+    if (complaint.status === "Resolved") return { label: "Closed", cls: "sla-safe" };
+
+    const deadline = complaint.createdAt + slaHours[complaint.priority] * 60 * 60 * 1000;
+    const remaining = deadline - Date.now();
+
+    if (remaining <= 0) {
+      return { label: "SLA Breached", cls: "sla-overdue" };
+    }
+
+    const hoursLeft = Math.floor(remaining / (60 * 60 * 1000));
+    const minsLeft = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+
+    // warn (orange) when less than 25% of the SLA window remains
+    const pctRemaining = remaining / (slaHours[complaint.priority] * 60 * 60 * 1000);
+    const cls = pctRemaining < 0.25 ? "sla-warning" : "sla-safe";
+
+    return { label: `${hoursLeft}h ${minsLeft}m left`, cls };
+  }
+
+  // =====================================================================
+  // 3. STATE + CRUD
+  // =====================================================================
+  let complaints = [];
+  let nextId = 1;
+
+  function submitComplaint() {
+    const name = document.getElementById("custName").value.trim();
+    const rollNo = document.getElementById("rollNo").value.trim();
+    const category = document.getElementById("category").value;
+    const desc = document.getElementById("descInput").value.trim();
+
+    if (!name || !desc) {
+      alert("Please fill in student name and grievance description.");
+      return;
+    }
+
+    const priority = detectPriority(desc);
+
+    complaints.unshift({
+      id: nextId++,
+      name,
+      rollNo,
+      category,
+      desc,
+      priority,
+      status: "Open",
+      createdAt: Date.now(),
+    });
+
+    // reset form
+    document.getElementById("custName").value = "";
+    document.getElementById("rollNo").value = "";
+    document.getElementById("descInput").value = "";
+    document.getElementById("priorityPreview").style.display = "none";
+
+    renderComplaints();
+  }
+
+  function updateStatus(id, newStatus) {
+    const complaint = complaints.find(c => c.id === id);
+    complaint.status = newStatus;
+    renderComplaints();
+  }
+
+  // =====================================================================
+  // 4. RENDER
+  // =====================================================================
+  function renderComplaints() {
+    const list = document.getElementById("complaintList");
+
+    if (complaints.length === 0) {
+      list.innerHTML = `<div class="empty-msg">No complaints logged yet.</div>`;
+    } else {
+      list.innerHTML = complaints.map(c => {
+        const sla = getSlaStatus(c);
+        return `
+          <div class="complaint">
+            <div class="complaint-top">
+              <div>
+                <h4>${c.category}</h4>
+                <div class="cust">${c.name}${c.rollNo ? " • " + c.rollNo : ""}</div>
+              </div>
+              <span class="badge ${c.priority.toLowerCase()}">${c.priority}</span>
+            </div>
+            <p class="desc">${c.desc}</p>
+            <div class="complaint-footer">
+              <span class="sla-timer ${sla.cls}">${sla.label}</span>
+              <select class="status-select" onchange="updateStatus(${c.id}, this.value)">
+                <option ${c.status === "Open" ? "selected" : ""}>Open</option>
+                <option ${c.status === "In Progress" ? "selected" : ""}>In Progress</option>
+                <option ${c.status === "Resolved" ? "selected" : ""}>Resolved</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    updateStats();
+  }
+
+  function updateStats() {
+    document.getElementById("statTotal").textContent = complaints.length;
+    document.getElementById("statOpen").textContent = complaints.filter(c => c.status !== "Resolved").length;
+    document.getElementById("statResolved").textContent = complaints.filter(c => c.status === "Resolved").length;
+    document.getElementById("statOverdue").textContent = complaints.filter(c => getSlaStatus(c).cls === "sla-overdue").length;
+  }
+
+  // refresh SLA timers every 30 seconds so countdowns stay live
+  setInterval(renderComplaints, 30000);
+
+  // =====================================================================
+  // 5. SEED DATA — a few example complaints so the app isn't empty on load
+  // =====================================================================
+  complaints = [
+    { id: nextId++, name: "Rohan Mehta", rollNo: "24102045", category: "Hostel & Accommodation", desc: "No water supply in Hostel Block C since morning, urgent issue.", priority: "High", status: "Open", createdAt: Date.now() - 2 * 60 * 60 * 1000 },
+    { id: nextId++, name: "Simran Kaur", rollNo: "24102078", category: "Wi-Fi / IT Services", desc: "Wi-Fi has been extremely slow in the library for the past 3 days.", priority: "Medium", status: "In Progress", createdAt: Date.now() - 20 * 60 * 60 * 1000 },
+    { id: nextId++, name: "Aditya Rana", rollNo: "24102112", category: "Mess / Canteen", desc: "Food quality in the mess was not clean this week.", priority: "Medium", status: "Resolved", createdAt: Date.now() - 40 * 60 * 60 * 1000 },
+  ];
+
+  renderComplaints();
+</script>
+
+</body>
+</html>
